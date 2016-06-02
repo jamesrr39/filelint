@@ -17,8 +17,10 @@ import (
 
 // group files by length
 func main() {
+	// prepare flags
 	verbose := flag.Bool("v", false, "verbose (print logs?)")
 	flag.Parse()
+
 	var dir string
 	if 0 < len(flag.Args()) {
 		dir = flag.Arg(0)
@@ -38,16 +40,7 @@ func main() {
 
 	log.Printf("Looking in %s\n\n", rootdir)
 
-	lengthCountMap := make(map[int64][]string)
-
-	filepath.Walk(rootdir, func(path string, fileinfo os.FileInfo, err error) error {
-		if fileinfo.IsDir() {
-			return nil
-		}
-		lengthCountMap[fileinfo.Size()] = append(lengthCountMap[fileinfo.Size()], path)
-		return nil
-	})
-
+	lengthCountMap := calculateLengthCountMap(rootdir)
 	var wg sync.WaitGroup
 	for filesize, files := range lengthCountMap {
 		if len(files) > 1 {
@@ -68,6 +61,22 @@ func main() {
 		}
 	}
 	wg.Wait()
+
+}
+
+func calculateLengthCountMap(rootdir string) map[int64][]string {
+
+	lengthCountMap := make(map[int64][]string)
+
+	filepath.Walk(rootdir, func(path string, fileinfo os.FileInfo, err error) error {
+		if fileinfo.IsDir() {
+			return nil
+		}
+		lengthCountMap[fileinfo.Size()] = append(lengthCountMap[fileinfo.Size()], path)
+		return nil
+	})
+
+	return lengthCountMap
 }
 
 type DuplicateFiles struct {

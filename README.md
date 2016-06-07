@@ -4,7 +4,7 @@ Duplicate file finder. Matches on length, then on md5 hash.
 
 Build
 
-    go build -o filelint
+    make build
 
 Run
 
@@ -16,4 +16,4 @@ example:
 
 Test
 
-    go test ./...
+    make test

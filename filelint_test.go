@@ -1,7 +1,9 @@
 package main
 
 import (
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"strconv"
 	"testing"
@@ -13,6 +15,7 @@ func Test_fileMd5(t *testing.T) {
 	if nil != err {
 		t.Fatal(err)
 	}
+	defer os.RemoveAll(tempdir)
 
 	file := filepath.Join(tempdir, "def.txt")
 
@@ -23,10 +26,11 @@ func Test_fileMd5(t *testing.T) {
 
 	var hash string
 	hash, err = fileMD5(file)
-
-	if "614dd0e977becb4c6f7fa99e64549b12" != hash {
-		t.Errorf("hash should be 614dd0e977becb4c6f7fa99e64549b12 but was %s", hash)
+	if nil != err {
+		t.Fatal(err)
 	}
+
+	assert.Equal(t, "614dd0e977becb4c6f7fa99e64549b12", hash)
 
 }
 
@@ -35,6 +39,7 @@ func Test_FindFilesWithSameMd5Hash(t *testing.T) {
 	if nil != err {
 		t.Fatal(err)
 	}
+	defer os.RemoveAll(tempdir)
 
 	fileContents := []string{"abc", "def", "abc", "gh", "abc", "def"}
 	var filePaths []string
@@ -54,30 +59,26 @@ func Test_FindFilesWithSameMd5Hash(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if 2 != len(duplcateFiles) {
-		t.Errorf("There should be 2 sets of same md5 hash files, but only found %d\n", len(duplcateFiles))
-	}
+	assert.Len(t, duplcateFiles, 2)
 
-	var twoDuplicateFiles DuplicateFiles
-	var threeDuplicateFiles DuplicateFiles
+	var twoDuplicateFiles *DuplicateFiles
+	var threeDuplicateFiles *DuplicateFiles
 	if 2 == len(duplcateFiles[0].Filepaths) {
-		twoDuplicateFiles = *duplcateFiles[0]
-		threeDuplicateFiles = *duplcateFiles[1]
+		twoDuplicateFiles = duplcateFiles[0]
+		threeDuplicateFiles = duplcateFiles[1]
 	} else {
-		twoDuplicateFiles = *duplcateFiles[1]
-		threeDuplicateFiles = *duplcateFiles[0]
+		twoDuplicateFiles = duplcateFiles[1]
+		threeDuplicateFiles = duplcateFiles[0]
 	}
 
-	if 2 != len(twoDuplicateFiles.Filepaths) {
-		t.Error("should be 2 duplicate items here")
-	}
+	assert.Len(t, twoDuplicateFiles.Filepaths, 2)
+	assert.Len(t, threeDuplicateFiles.Filepaths, 3)
+	assert.NotEqual(t, twoDuplicateFiles.Md5Hash, threeDuplicateFiles.Md5Hash)
+}
 
-	if 3 != len(threeDuplicateFiles.Filepaths) {
-		t.Error("should be 3 duplicate items here")
-	}
-
-	if twoDuplicateFiles.Md5Hash == threeDuplicateFiles.Md5Hash {
-		t.Error("twoDuplicateFiles should have a different md5 hash to threeDuplicateFiles")
-	}
-
+func Test_humaniseBytes(t *testing.T) {
+	assert.Equal(t, "1.00 KiB", humaniseBytes(int64(1024)))
+	assert.Equal(t, "1.50 KiB", humaniseBytes(int64(1540)))
+	assert.Equal(t, "5.50 MiB", humaniseBytes(int64(5767168)))
+	assert.Equal(t, "40.70 GiB", humaniseBytes(int64(43701292236)))
 }

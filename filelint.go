@@ -18,7 +18,7 @@ import (
 // group files by length
 func main() {
 	// prepare flags
-	verbose := flag.Bool("v", false, "verbose (print logs?)")
+	verbose := flag.Bool("v", false, "verbose (print developer logs?)")
 	flag.Parse()
 
 	var dir string
@@ -38,9 +38,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Printf("Looking in %s\n\n", rootdir)
+	fmt.Printf("Looking in %s\n\n", rootdir)
 
 	lengthCountMap := calculateLengthCountMap(rootdir)
+
+	var possibleBytesSaving int64
 	var wg sync.WaitGroup
 	for filesize, files := range lengthCountMap {
 		if len(files) > 1 {
@@ -57,11 +59,37 @@ func main() {
 					fmt.Println(path)
 				}
 			}
+			possibleBytesSaving = possibleBytesSaving + (filesize * int64(len(files)-1))
 			wg.Done()
 		}
 	}
 	wg.Wait()
 
+	fmt.Printf("\nAmount of space taken up by duplicate files: %s\n", humaniseBytes(possibleBytesSaving))
+
+}
+
+func humaniseBytes(bytes int64) string {
+	units := []string{"PiB", "TiB", "GiB", "MiB", "KiB", "B"}
+	for index, unit := range units {
+		oneUnitInBytes := powInt64(int64(1024), len(units)-(index+2))
+		//log.Printf("unit in bytes %s: %d Index %d\n", unit, oneUnitInBytes, len(units)-index)
+		if bytes >= oneUnitInBytes {
+			amountOfWholeUnits := bytes / oneUnitInBytes
+			remainder := bytes % oneUnitInBytes
+			decimal := float32(remainder) / float32(oneUnitInBytes)
+			return fmt.Sprintf("%.2f %s", float32(amountOfWholeUnits)+decimal, unit)
+		}
+	}
+	return fmt.Sprintf("%d %s", bytes, "Bi")
+}
+
+func powInt64(base int64, exponent int) int64 {
+	total := base
+	for i := 0; i < exponent; i++ {
+		total = total * base
+	}
+	return total
 }
 
 func calculateLengthCountMap(rootdir string) map[int64][]string {
@@ -84,10 +112,13 @@ type DuplicateFiles struct {
 	Filepaths []string
 }
 
+type md5Map map[string][]string
+
 func findFilesWithSameMd5Hash(paths []string) ([]*DuplicateFiles, error) {
-	md5MapHashes := make(map[string][]string)
+	md5MapHashes := make(md5Map)
 	var duplicateFiles []*DuplicateFiles
 
+	var mutex = &sync.Mutex{}
 	var wg sync.WaitGroup
 	wg.Add(len(paths))
 	for _, path := range paths {
@@ -98,7 +129,10 @@ func findFilesWithSameMd5Hash(paths []string) ([]*DuplicateFiles, error) {
 			}
 			hash := string(hashBytes)
 
+			mutex.Lock()
 			md5MapHashes[hash] = append(md5MapHashes[hash], path)
+			mutex.Unlock()
+
 			wg.Done()
 			return nil
 		}(path)

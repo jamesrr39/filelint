@@ -1,2 +1,7 @@
 # liteide
 filelint
+
+pkg/
+src/github.com/
+
+

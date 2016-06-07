@@ -1,5 +1,5 @@
 export GOPATH := $(shell pwd)
-export GOBIN := $GOPATH/bin
+export GOBIN := $(GOPATH)/bin
 
 all: deps
 

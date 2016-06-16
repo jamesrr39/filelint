@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "github.com/stretchr/objx"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"

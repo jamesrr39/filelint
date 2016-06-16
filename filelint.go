@@ -81,7 +81,7 @@ func humaniseBytes(bytes int64) string {
 			return fmt.Sprintf("%.2f %s", float32(amountOfWholeUnits)+decimal, unit)
 		}
 	}
-	return fmt.Sprintf("%d %s", bytes, "Bi")
+	return fmt.Sprintf("%d %s", bytes, "B")
 }
 
 func powInt64(base int64, exponent int) int64 {

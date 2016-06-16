@@ -1,7 +1,9 @@
 # liteide
-filelint
+/filelint
 
-pkg/
-src/github.com/
+/pkg/
+/bin/
+
+/src/github.com/
 
 

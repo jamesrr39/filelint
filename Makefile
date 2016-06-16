@@ -5,11 +5,11 @@ export GOBIN := $(GOPATH)/bin
 all: deps
 
 deps:
-	go get ./...
+	go get -t ./...
 
 build: deps
 	go build -o filelint
 
 test: deps
-	go test
+	go test ./...
 
